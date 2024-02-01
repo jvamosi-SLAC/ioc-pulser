@@ -13,5 +13,5 @@
 pushd $$IOCTOP/pulserScreens
 
 $$LOOP(PULSER)
-pydm -m "DEV=$$BASE,IOC=$$IOC_PV" pulser.ui &
+pydm -m "DEV=$$BASE,IOC=$$IOC_PV" ioc-pulser.ui &
 $$ENDLOOP(PULSER)
