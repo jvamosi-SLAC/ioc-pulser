@@ -1,0 +1,8 @@
+# pulser IOC instance autosave file
+
+$$LOOP(PULSER)
+file pulser.req
+{
+	{ IOC = "$$IOC_PV", BASE="$$BASE" }
+}
+$$ENDLOOP(PULSER)

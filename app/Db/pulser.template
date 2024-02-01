@@ -1,0 +1,590 @@
+##  Pulser
+##
+##  DEV
+##       EPICS prefix
+##  PORT
+##       ASYN PORT_NAME
+##
+##
+
+record(longin, "$(DEV):ADDRESS")
+{
+    field(DESC, "Pulser Address")
+    field(INP, "0")
+}
+
+record(longin, "$(DEV):BP_IDX0")
+{
+    field(DESC, "Index 0")
+    field(INP, "0")
+}
+
+record(longin, "$(DEV):BP_IDX1")
+{
+    field(DESC, "Index 0")
+    field(INP, "0")
+}
+
+record(longin, "$(DEV):BP_IDX2")
+{
+    field(DESC, "Index 0")
+    field(INP, "0")
+}
+
+record(longin, "$(DEV):BP_IDX3")
+{
+    field(DESC, "Index 0")
+    field(INP, "0")
+}
+
+record(longin, "$(DEV):BP_IDX4")
+{
+    field(DESC, "Index 0")
+    field(INP, "0")
+}
+
+#record(aai, "$(DEV):BP_IDX")
+#{
+#    field(DESC, "Index 0")
+#    field(INP, "0")
+#    field(FTVL, "SHORT")
+#    field(NELM, "26")
+#    field(PREC, "0")
+#}
+
+record(acalcout, "$(DEV):SET_BP_OUT")
+{
+    field(DESC, "Send Out SetBP")
+    field(CALC, "(ARR(A){0,0}+ARR(B){1,1}+ARR(C){2,2}+ARR(D){3,3}+ARR(E){4,4}+ARR(F){5,5})")
+    field(INPA, "$(DEV):ADDRESS")
+    field(INPB, "$(DEV):BP_IDX0")
+    field(INPC, "$(DEV):BP_IDX1")
+    field(INPD, "$(DEV):BP_IDX2")
+    field(INPE, "$(DEV):BP_IDX3")
+    field(INPF, "$(DEV):BP_IDX4")
+    field(NELM, "6")
+    field(OUT, "$(DEV):SET_BP PP")
+}
+
+#record(acalcout, "$(DEV):SET_BP_OUT")
+#{
+#    field(DESC, "Send out SetBP")
+#    field(CALC, "(ARR(A){0,0})+(ARR(AA)>>1)")
+#    field(CALC, "ARR(AA)")
+#    field(INPA, "$(DEV):ADDRESS")
+#    field(INAA, "$(DEV):BP_IDX")
+#    field(NELM, "26")
+#    field(OUT, "$(DEV):SET_BP PP")
+#}
+
+record(waveform, "$(DEV):SET_BP")
+{
+    field(DESC, "Set breakpoints")
+    field(DTYP, "asynInt16ArrayOut")
+    field(INP,  "@asyn($(PORT))SET_BP")
+    field(FTVL, "SHORT")
+    field(NELM, "51")
+#    field(FLNK, "$(DEV):BP_ADDR")
+}
+
+#record(waveform, "$(DEV):SET_BP_INP")
+#{
+#    field(DESC, "Set breakpoints")
+#    field(FTVL, "STRING")
+#    field(INP,  "0")
+#    field(NELM, "50")
+#}
+
+#record(subArray, "$(DEV):BP_ADDR")
+#{
+#    field(DTYP, "Soft Channel")
+#    field(DESC, "Breakpoint address")
+#    field(INP,  "$(DEV):SET_BP.VAL")
+#    field(FTVL, "SHORT")
+#    field(MALM, "1")
+#    field(NELM, "1")
+#    field(INDX, "0")
+#}
+
+#record(aao, "$(DEV):SET_BP2")
+#{
+#    field(DESC, "Set breakpoints 2")
+#    field(DTYP, "asynInt16ArrayOut")
+#    field(OUT,  "@asyn($(PORT))SET_BP2")
+#    field(FTVL, "SHORT")
+#    field(NELM, "51")
+#}
+
+record(calcout, "$(DEV):CLEAR_BP_OUT")
+{
+    field(DESC, "Send Out ClearBP")
+    field(CALC, "A")
+    field(INPA, "$(DEV):ADDRESS")
+    field(OUT, "$(DEV):CLEAR_BP PP")
+}
+
+record(longout, "$(DEV):CLEAR_BP")
+{
+    field(DESC, "Clear breakpoints")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT))CLEAR_BP")
+}
+
+record(calcout, "$(DEV):ENABLE_SINGLE_OUT")
+{
+    field(DESC, "Send Out EnableSingle")
+    field(CALC, "A")
+    field(INPA, "$(DEV):ADDRESS")
+    field(OUT, "$(DEV):ENABLE_SINGLE PP")
+}
+
+record(longout, "$(DEV):ENABLE_SINGLE")
+{
+    field(DESC, "Enable Single Pulser")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT))ENABLE_SINGLE")
+}
+
+record(calcout, "$(DEV):DISABLE_SINGLE_OUT")
+{
+    field(DESC, "Send Out DisableSingle")
+    field(CALC, "A")
+    field(INPA, "$(DEV):ADDRESS")
+    field(OUT, "$(DEV):DISABLE_SINGLE PP")
+}
+
+record(longout, "$(DEV):DISABLE_SINGLE")
+{
+    field(DESC, "Disable Single Pulser")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT))DISABLE_SINGLE")
+}
+
+record(bo, "$(DEV):ENABLE_DISABLE_ALL")
+{
+    field(DESC, "Enable-disable all")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT))ENABLE_DISABLE_ALL")
+    field(ZNAM, "DISABLE")
+    field(ONAM, "ENABLE")
+}
+
+record(bo, "$(DEV):TRIGGER_READY")
+{
+    field(DESC, "Trigger ready")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT))TRIGGER_READY")
+    field(ZNAM, "OFF")
+    field(ONAM, "ON")
+}
+
+record(calcout, "$(DEV):SEND_BUILD_OUT")
+{
+    field(DESC, "Send Out SendBuild")
+    field(CALC, "A")
+    field(INPA, "$(DEV):ADDRESS")
+    field(OUT, "$(DEV):SEND_BUILD PP")
+}
+
+record(longout, "$(DEV):SEND_BUILD")
+{
+    field(DESC, "Send build")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT))SEND_BUILD")
+}
+
+record(bo, "$(DEV):EXT_TRIG")
+{
+    field(DESC, "External trigger")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT))EXT_TRIG")
+    field(ZNAM, "OFF")
+    field(ONAM, "ON")
+}
+
+record(bo, "$(DEV):GET_STATUS")
+{
+    field(DESC, "Get status")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT))GET_STATUS")
+    field(ZNAM, "OFF")
+    field(ONAM, "ON")
+    field(PINI, "YES")
+}
+
+#record(aai,"$(DEV):STATUS")
+record(waveform,"$(DEV):STATUS")
+{
+    field(DESC, "Status array")
+    field(DTYP, "asynFloat32ArrayIn")
+    field(INP,  "@asyn($(PORT))STATUS")
+    field(SCAN, "I/O Intr")
+    field(FTVL, "FLOAT")
+    field(NELM, "24")
+    field(PREC, "2")
+    field(FLNK, "$(DEV):STATUS_B1")
+}
+
+record(subArray, "$(DEV):STATUS_B1")
+{
+    field(DTYP, "Soft Channel")
+    field(DESC, "Boolean status 1")
+    field(INP,  "$(DEV):STATUS")
+    field(FTVL, "LONG")
+    field(MALM, "24")
+    field(NELM, "1")
+    field(INDX, "0")
+    field(FLNK, "$(DEV):STATUS_B1_CALC")
+}
+
+record(acalcout, "$(DEV):STATUS_B1_CALC")
+{
+    field(DESC, "Convert status 1 to int")
+    field(CALC, "SUM(AA)")
+    field(INAA, "$(DEV):STATUS_B1")
+    field(NELM, "1")
+    field(OUT, "$(DEV):STATUS_B1_INT PP")
+}
+
+record(longin, "$(DEV):STATUS_B1_INT")
+{
+    field(DESC, "Int value of status B1")
+    field(INP, "0")
+    field(FLNK, "$(DEV):STATUS_B2")
+}
+
+record(subArray, "$(DEV):STATUS_B2")
+{
+    field(DTYP, "Soft Channel")
+    field(DESC, "Boolean status 2")
+    field(INP,  "$(DEV):STATUS")
+    field(FTVL, "LONG")
+    field(MALM, "24")
+    field(NELM, "1")
+    field(INDX, "1")
+    field(FLNK, "$(DEV):STATUS_B2_CALC")
+}
+
+record(acalcout, "$(DEV):STATUS_B2_CALC")
+{
+    field(DESC, "Convert status 2 to int")
+    field(CALC, "SUM(AA)")
+    field(INAA, "$(DEV):STATUS_B2")
+    field(NELM, "1")
+    field(OUT, "$(DEV):STATUS_B2_INT PP")
+}
+
+record(longin, "$(DEV):STATUS_B2_INT")
+{
+    field(DESC, "Int value of status B2")
+    field(INP, "0")
+    field(FLNK, "$(DEV):STATUS_B3")
+}
+
+record(subArray, "$(DEV):STATUS_B3")
+{
+    field(DTYP, "Soft Channel")
+    field(DESC, "Boolean status 3")
+    field(INP,  "$(DEV):STATUS")
+    field(FTVL, "LONG")
+    field(MALM, "24")
+    field(NELM, "1")
+    field(INDX, "2")
+    field(FLNK, "$(DEV):STATUS_B3_CALC")
+}
+
+record(acalcout, "$(DEV):STATUS_B3_CALC")
+{
+    field(DESC, "Convert status 3 to int")
+    field(CALC, "SUM(AA)")
+    field(INAA, "$(DEV):STATUS_B3")
+    field(NELM, "1")
+    field(OUT, "$(DEV):STATUS_B3_INT PP")
+}
+
+record(longin, "$(DEV):STATUS_B3_INT")
+{
+    field(DESC, "Int value of status B3")
+    field(INP, "0")
+    field(FLNK, "$(DEV):STATUS_B4")
+}
+
+record(subArray, "$(DEV):STATUS_B4")
+{
+    field(DTYP, "Soft Channel")
+    field(DESC, "Boolean status 4")
+    field(INP,  "$(DEV):STATUS")
+    field(FTVL, "LONG")
+    field(MALM, "24")
+    field(NELM, "1")
+    field(INDX, "23")
+    field(FLNK, "$(DEV):STATUS_B4_CALC")
+}
+
+record(acalcout, "$(DEV):STATUS_B4_CALC")
+{
+    field(DESC, "Convert status 4 to int")
+    field(CALC, "SUM(AA)")
+    field(INAA, "$(DEV):STATUS_B4")
+    field(NELM, "1")
+    field(OUT, "$(DEV):STATUS_B4_INT PP")
+}
+
+record(longin, "$(DEV):STATUS_B4_INT")
+{
+    field(DESC, "Int value of status B4")
+    field(INP, "0")
+    field(FLNK, "$(DEV):STATUS_A1")
+}
+
+record(subArray, "$(DEV):STATUS_A1")
+{
+    field(DTYP, "Soft Channel")
+    field(DESC, "Float status 1")
+    field(INP,  "$(DEV):STATUS")
+    field(FTVL, "FLOAT")
+    field(MALM, "24")
+    field(NELM, "1")
+    field(INDX, "3")
+    field(PREC, "2")
+    field(FLNK, "$(DEV):STATUS_A2")
+}
+
+record(subArray, "$(DEV):STATUS_A2")
+{
+    field(DTYP, "Soft Channel")
+    field(DESC, "Float status 2")
+    field(INP,  "$(DEV):STATUS")
+    field(FTVL, "FLOAT")
+    field(MALM, "24")
+    field(NELM, "1")
+    field(INDX, "4")
+    field(PREC, "2")
+    field(FLNK, "$(DEV):STATUS_A3")
+}
+
+record(subArray, "$(DEV):STATUS_A3")
+{
+    field(DTYP, "Soft Channel")
+    field(DESC, "Float status 3")
+    field(INP,  "$(DEV):STATUS")
+    field(FTVL, "FLOAT")
+    field(MALM, "24")
+    field(NELM, "1")
+    field(INDX, "5")
+    field(PREC, "2")
+    field(FLNK, "$(DEV):STATUS_A4")
+}
+
+record(subArray, "$(DEV):STATUS_A4")
+{
+    field(DTYP, "Soft Channel")
+    field(DESC, "Float status 4")
+    field(INP,  "$(DEV):STATUS")
+    field(FTVL, "FLOAT")
+    field(MALM, "24")
+    field(NELM, "1")
+    field(INDX, "6")
+    field(PREC, "2")
+    field(FLNK, "$(DEV):STATUS_A5")
+}
+
+record(subArray, "$(DEV):STATUS_A5")
+{
+    field(DTYP, "Soft Channel")
+    field(DESC, "Float status 5")
+    field(INP,  "$(DEV):STATUS")
+    field(FTVL, "FLOAT")
+    field(MALM, "24")
+    field(NELM, "1")
+    field(INDX, "7")
+    field(PREC, "2")
+}
+
+record(ai, "$(DEV):LIMIT_IDX0")
+{
+    field(DESC, "Index 0")
+    field(INP, "0")
+    field(PREC, "2")
+}
+
+record(ai, "$(DEV):LIMIT_IDX1")
+{
+    field(DESC, "Index 1")
+    field(INP, "0")
+    field(PREC, "2")
+}
+
+record(ai, "$(DEV):LIMIT_IDX2")
+{
+    field(DESC, "Index 2")
+    field(INP, "0")
+    field(PREC, "2")
+}
+
+record(ai, "$(DEV):LIMIT_IDX3")
+{
+    field(DESC, "Index 3")
+    field(INP, "0")
+    field(PREC, "2")
+}
+
+record(ai, "$(DEV):LIMIT_IDX4")
+{
+    field(DESC, "Index 4")
+    field(INP, "0")
+    field(PREC, "2")
+}
+
+record(acalcout, "$(DEV):UPDATE_LIMITS_OUT")
+{
+    field(DESC, "Send out UpdateLimits")
+    field(CALC, "(ARR(A){0,0}+ARR(B){1,1}+ARR(C){2,2}+ARR(D){3,3}+ARR(E){4,4})")
+    field(INPA, "$(DEV):LIMIT_IDX0")
+    field(INPB, "$(DEV):LIMIT_IDX1")
+    field(INPC, "$(DEV):LIMIT_IDX2")
+    field(INPD, "$(DEV):LIMIT_IDX3")
+    field(INPE, "$(DEV):LIMIT_IDX4")
+    field(NELM, "5")
+    field(OUT, "$(DEV):UPDATE_LIMITS PP")
+}
+
+#record(aao,"$(DEV):UPDATE_LIMITS")
+record(waveform,"$(DEV):UPDATE_LIMITS")
+{
+    field(DESC, "Update sensor limits")
+    field(DTYP, "asynFloat32ArrayOut")
+    field(INP,  "@asyn($(PORT))UPDATE_LIMITS")
+    field(FTVL, "FLOAT")
+    field(NELM, "57")
+    field(PREC, "2")
+}
+
+record(longin, "$(DEV):DELAY")
+{
+    field(DESC, "Delay")
+    field(INP, "0")
+}
+
+record(acalcout, "$(DEV):SET_INT_DELAY_OUT")
+{
+    field(DESC, "Send Out SetIntDelay")
+    field(CALC, "(ARR(A){0,0})+ARR(B){1,1}")
+#    field(CALC, "(ARR(A)<<1)+(ARR(B)>>1)")
+    field(INPA, "$(DEV):ADDRESS")
+    field(INPB, "$(DEV):DELAY")
+    field(NELM, "2")
+    field(OUT, "$(DEV):SET_INT_DELAY PP")
+}
+
+#record(aao, "$(DEV):SET_INT_DELAY")
+record(waveform, "$(DEV):SET_INT_DELAY")
+{
+    field(DESC, "Set int delay")
+    field(DTYP, "asynInt16ArrayOut")
+    field(INP,  "@asyn($(PORT))SET_INT_DELAY")
+    field(FTVL, "SHORT")
+    field(NELM, "2")
+}
+
+record(bo, "$(DEV):SAFE_TRANSITION")
+{
+    field(DESC, "Safe transition")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT))SAFE_TRANSITION")
+    field(ZNAM, "OFF")
+    field(ONAM, "ON")
+}
+
+record(bo, "$(DEV):PURGE_CONFIG")
+{
+    field(DESC, "Purge config")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT))PURGE_CONFIG")
+    field(ZNAM, "OFF")
+    field(ONAM, "ON")
+}
+
+record(ai, "$(DEV):CAL_SQUARED")
+{
+    field(DESC, "Squared")
+    field(INP, "0")
+    field(PREC, "2")
+}
+
+record(ai, "$(DEV):CAL_LINEAR")
+{
+    field(DESC, "Linear")
+    field(INP, "0")
+    field(PREC, "2")
+}
+
+record(ai, "$(DEV):CAL_OFFSET")
+{
+    field(DESC, "Offset")
+    field(INP, "0")
+    field(PREC, "2")
+}
+
+record(acalcout, "$(DEV):SET_PULSER_CAL_OUT")
+{
+    field(DESC, "Send Out SetPulserCal")
+    field(CALC, "(ARR(A){0,0})+ARR(B){1,1}+ARR(C){2,2}+ARR(D){3,3}")
+    field(INPA, "$(DEV):ADDRESS")
+    field(INPB, "$(DEV):CAL_SQUARED")
+    field(INPC, "$(DEV):CAL_LINEAR")
+    field(INPD, "$(DEV):CAL_OFFSET")
+    field(NELM, "4")
+    field(OUT, "$(DEV):SET_PULSER_CAL PP")
+}
+
+#record(aao,"$(DEV):SET_PULSER_CAL")
+record(waveform,"$(DEV):SET_PULSER_CAL")
+{
+    field(DESC, "Set pulser calibration")
+    field(DTYP, "asynFloat32ArrayOut")
+    field(INP,  "@asyn($(PORT))SET_PULSER_CAL")
+    field(FTVL, "FLOAT")
+    field(NELM, "4")
+    field(PREC, "2")
+}
+
+record(stringout, "$(DEV):DATE_TIME_TO_SEND")
+{
+    field(DESC, "Datetime to send")
+    field(OUT, "$(DEV):SET_DATE_TIME")
+}
+
+record(stringout, "$(DEV):SET_DATE_TIME")
+{
+    field(DESC, "Set datetime")
+    field(DTYP, "asynOctetWrite")
+    field(OUT,  "@asyn($(PORT))SET_DATE_TIME")
+}
+
+record(bo, "$(DEV):GET_DATE_TIME")
+{
+    field(DESC, "Get datetime")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT))GET_DATE_TIME")
+    field(ZNAM, "GET")
+    field(ONAM, "GET")
+    field(PINI, "YES")
+}
+
+record(stringin, "$(DEV):DATE_TIME")
+{
+    field(DESC, "Datetime")
+    field(DTYP, "asynOctetRead")
+    field(INP,  "@asyn($(PORT))DATE_TIME")
+    field(SCAN, "I/O Intr")
+}
+
+record(bo, "$(DEV):INIT")
+{
+    field(DESC, "Initialize")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT))INIT")
+    field(ZNAM, "OFF")
+    field(ONAM, "ON")
+}
