@@ -24,7 +24,7 @@
 #define RESPONSE_SIZE       512
 
 //Poller thread
-#define DEFAULT_POLL_TIME   0.25
+#define DEFAULT_POLL_TIME   1.0
 
 /* These are the strings that device support passes to drivers via
  * the asynDrvUser interface.
@@ -51,8 +51,7 @@
 #define PULSER_GET_DATE_TIME_STRING      "GET_DATE_TIME"
 #define PULSER_DATE_TIME_STRING          "DATE_TIME"
 #define PULSER_INIT_STRING               "INIT"
-
-#define PULSER_SET_BP2_STRING            "SET_BP2"
+#define PULSER_COMM_STRING               "COMM"
 
 class drvPulser : public asynPortDriver {
 public:
@@ -123,11 +122,12 @@ protected:
     int getDateTime_;
     int dateTime_;
     int init_;
+    int comm_;
 
 private:
     /* Our data */
     bool initialized_;           /* If initialized successfully */
-    bool isConnected_;           /* Connection status */
+    int isConnected_;            /* Connection status */
     char *portName_;             /* asyn port name for the user driver */
     char *octetPortName_;        /* asyn port name for the asyn octet port */
     char *hostInfo_;             /* host info (IP address,connection type, port)*/

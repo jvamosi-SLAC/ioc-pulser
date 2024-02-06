@@ -588,3 +588,13 @@ record(bo, "$(DEV):INIT")
     field(ZNAM, "OFF")
     field(ONAM, "ON")
 }
+
+record(bi, "$(DEV):COMM")
+{
+    field(DESC, "Communication status")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT))COMM")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "OFF")
+    field(ONAM, "ON")
+}

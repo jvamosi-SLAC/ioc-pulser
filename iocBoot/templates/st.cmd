@@ -41,6 +41,7 @@ dbLoadRecords("db/iocSoft.db",             "IOC=$(IOC_PV)")
 #dbLoadRecords("db/save_restoreStatus.db",  "P=$(IOC_PV):")
 $$LOOP(PULSER)
 dbLoadRecords("db/pulser.db","DEV=$$BASE,PORT=PULSER$$INDEX,DSCAN=$$IF(DATASCAN,$$DATASCAN,1),CSCAN=$$IF(CONFSCAN,$$CONFSCAN,5)")
+dbLoadRecords("db/asynRecord.db","P=$(IOC_PV):,R=ASYN,PORT=PULSER$$INDEX,ADDR=0,IMAX=0,OMAX=0")
 $$ENDLOOP(PULSER)
 
 # Setup autosave

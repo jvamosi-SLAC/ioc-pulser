@@ -55,7 +55,7 @@ drvPulser::drvPulser(const char *portName, const char* hostInfo)
 
     pulserExiting_(false),
     initialized_(false),
-    isConnected_(false),
+    isConnected_(0),
     portName_(epicsStrDup(portName)),
     octetPortName_(NULL),
     hostInfo_(epicsStrDup(hostInfo)),
@@ -90,8 +90,7 @@ drvPulser::drvPulser(const char *portName, const char* hostInfo)
     createParam(PULSER_GET_DATE_TIME_STRING,      asynParamInt32,          &getDateTime_);
     createParam(PULSER_DATE_TIME_STRING,          asynParamOctet,          &dateTime_);
     createParam(PULSER_INIT_STRING,               asynParamInt32,          &init_);
-
-    createParam(PULSER_SET_BP2_STRING,            asynParamInt16Array,     &setBp2_);
+    createParam(PULSER_COMM_STRING,               asynParamInt32,          &comm_);
 
     /* Create octet port name */
     size_t prefixlen = strlen(PORT_PREFIX);
@@ -103,11 +102,13 @@ drvPulser::drvPulser(const char *portName, const char* hostInfo)
     
     //drvAsynIPPortConfigure("portName","hostInfo",priority,noAutoConnect,noProcessEos)
     ipConfigureStatus = drvAsynIPPortConfigure(octetPortName_, hostInfo_, 0, 0, 0);
-
-    if (ipConfigureStatus) {
+    printf("IPPortConfigure: hostinfo: %s, portname: %s\n", hostInfo_, octetPortName_);
+    
+    if (ipConfigureStatus != 0) {
         asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
             "%s::%s, Unable to configure drvAsynIPPort %s",
             driverName, functionName, octetPortName_);
+	printf("IPPortConfigure failed: hostinfo: %s, portname: %s\n", hostInfo_, octetPortName_);
         return;
     }
  
@@ -118,21 +119,22 @@ drvPulser::drvPulser(const char *portName, const char* hostInfo)
     //sendReceive((char*)"DateTime", 1);
     
     /* Create the epicsEvent to wake up the pollerThread.*/
-//    pollerEventId_ = epicsEventCreate(epicsEventEmpty);
+    pollerEventId_ = epicsEventCreate(epicsEventEmpty);
 
     /* Create the thread to read registers if this is a read function code */
-//    pollerThreadId_ = epicsThreadCreate("PulserPoller",
-//            epicsThreadPriorityMedium,
-//            epicsThreadGetStackSize(epicsThreadStackMedium),
-//            (EPICSTHREADFUNC)pollerThreadC,
-//            this);
+    pollerThreadId_ = epicsThreadCreate("PulserPoller",
+            epicsThreadPriorityMedium,
+            epicsThreadGetStackSize(epicsThreadStackMedium),
+            (EPICSTHREADFUNC)pollerThreadC,
+            this);
 
     //epicsAtExit(pulserExitCallback, this);
 
     initialized_ = true;
 }
 
-drvPulser::~drvPulser() {
+drvPulser::~drvPulser() 
+{
     if (hostInfo_)
         free(hostInfo_);
     if (portName_)
@@ -154,9 +156,11 @@ drvPulser::~drvPulser() {
 /* Connect */
 asynStatus drvPulser::connect(asynUser *pasynUser)
 {
-    if (initialized_ == false) return asynDisabled;
+    if (initialized_ == false) 
+      return asynDisabled;
 
     pasynManager->exceptionConnect(pasynUser);
+    
     return asynSuccess;
 }
 
@@ -283,9 +287,13 @@ asynStatus drvPulser::writeInt32(asynUser *pasynUser, epicsInt32 value)
             asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, "No meta index found for Init");
         }    
     } else if (function == getStatus_) {
+        lock();
         sendReceive((char*)"Status", value);
+        unlock();
     } else if (function == getDateTime_) {
+        lock();
         sendReceive((char*)"DateTime", value);
+        unlock();
     } else {
         asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, "%s::%s port %s invalid pasynUser->reason: %d\n",
             driverName, functionName, this->portName, function);
@@ -508,16 +516,46 @@ int drvPulser::connectReadMetaData(char* octetPortName_)
     int status;
     unsigned int msg_len = 0;
     char response[RESPONSE_SIZE];
+    static const char *functionName = "connectReadMetaData";
 
     // connect to server with asynOctetSyncIO
-    if (pasynOctetSyncIO->connect(octetPortName_, 0, &pasynUserOctet_, 0) == asynSuccess) {
-        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, "Connected to LabVIEW server %s.\n", octetPortName_);
-        isConnected_ = true;
-    } else {
-        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, "Can't connect to LabVIEW server %s.\n", octetPortName_);
+    if ((status = pasynOctetSyncIO->connect(octetPortName_, 0, &pasynUserOctet_, 0)) == asynSuccess) {
+        //asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, "Connected to asyn portr %s.\n", octetPortName_);
+        printf("Connected to asyn port %s.\n", octetPortName_);
+ 
+        // check TCP connection to STM server
+        status = pasynManager->isConnected(pasynUserOctet_, &isConnected_);
+        if (status != 0) {
+            //asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, "Error calling pasynManager->isConnected, status=%d, error=%s\n",
+            //    status, pasynUserOctet_->errorMessage);
+            printf("1: Error calling pasynManager->isConnected, status=%d, error=%s\n",
+                status, pasynUserOctet_->errorMessage);
+        }
+
+        printf("LabVIEW server TCP connections status: %d\n", isConnected_); 
+
+        if (isConnected_ == 0) {
+            if ((status = pasynOctetSyncIO->disconnect(pasynUserOctet_) == asynSuccess)) {
+                //asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, "Disconnected from asyn portr %s.\n", octetPortName_);
+                printf("Disconnected from asyn port %s.\n", octetPortName_);
+                } else {
+                //asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, "Can't disconnect from asyn port %s.\n", octetPortName_);
+                printf("Can't disconnect from asyn port %s.\n", octetPortName_);
+                //return 0;
+            }
+        }
+    }
+    
+    //update connection PV
+    setIntegerParam(comm_, isConnected_);
+    
+    // do callbacks so higher layers see any changes
+    callParamCallbacks();
+
+    if (isConnected_ == 0) {
         return 0;
     }
-
+    
     // read meta data message length
     status = pasynOctetSyncIO->read(pasynUserOctet_, response, sizeof(unsigned int), DEVICE_RW_TIMEOUT, &nRead1, &eomReason);
     //printf("Meta length read status: %d, number of bytes:%d\n", status, (int)nRead1);
@@ -567,12 +605,16 @@ int  drvPulser::sendReceive(char* commandStr, int value)
             if (pasynOctetSyncIO->write(pasynUserOctet_, msgBuffer, msgLen, DEVICE_RW_TIMEOUT, &nWrite) != asynSuccess) {
                 asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, "Sending %s request failed\n", commandStr);
                 reqStatus = 0;
+                //printf("Sending %s request failed\n", commandStr);
             }
         } else {
-            asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, "No meta index found for %s", commandStr);
+            asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, "No meta index found for %s\n", commandStr);
             reqStatus = 0;
+            printf("No meta index found for %s\n", commandStr);
         }    
-    
+
+        //printf("Message: %s\n", commandStr);
+        
         if (reqStatus == 1)  {
             int eomReason;
             size_t nRead1, nRead2;
@@ -592,13 +634,12 @@ int  drvPulser::sendReceive(char* commandStr, int value)
                 rspStatus = pasynOctetSyncIO->read(pasynUserOctet_, response + sizeof(unsigned int), msgLen, DEVICE_RW_TIMEOUT, &nRead2, &eomReason);
                 //printf("%s data status: %d, number of bytes:%d\n", commandStr, rspStatus, (int)nRead2);
                 if (nRead2 > 0) {
-                    if (strcmp(commandStr, "Status") == 0)
-                    {
+                    if (strcmp(commandStr, "Status") == 0) {
                         //string dispstring;
                         //char smallstring[64];
                         
                         if((dcdStatus = pStm->decodeStatusMsg(&response[0], &dataFloat, &size)) != 0) {
-                            //printf("Status decoded, size: %d.\n", size);
+                            printf("Status decoded, size: %d.\n", size);
                             //for (int i=0; i<size; i++) {
                             //    sprintf(smallstring, "%.1f, ", dataFloat[i]);
                             //    dispstring += smallstring;
@@ -617,14 +658,13 @@ int  drvPulser::sendReceive(char* commandStr, int value)
                             delete dataFloat;
                         }
                     }
-                    else if (strcmp(commandStr, "DateTime") == 0)
-                    {
+                    else if (strcmp(commandStr, "DateTime") == 0) {
                         string dateTimeStr;
                         
                         if((dcdStatus = pStm->decodeDateTimeMsg(&response[0], &dataChar, &size)) != 0) {
                             dateTimeStr.append(dataChar, size);
                             
-                            //printf("DateTime: %s\n", dateTimeStr.c_str());
+                            printf("DateTime: %s\n", dateTimeStr.c_str());
                             
                             //update DataTime PV
                             setStringParam(dateTime_, dateTimeStr);
@@ -636,12 +676,13 @@ int  drvPulser::sendReceive(char* commandStr, int value)
                         }
                     }
                     
-                    if (dcdStatus == 0)
-                    {
+                    if (dcdStatus == 0) {
                         asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, "Failed to decode %s data\n", commandStr);
+                        printf("Failed to decode %s data\n", commandStr);
                     }
                 } else {    
                     asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, "Failed to get %s data\n", commandStr);
+                    //printf("Failed to get %s data\n", commandStr);
                 }
             } else {
                 asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, "Error in getting number of bytes: %d\n", (int)nRead1);
@@ -662,77 +703,81 @@ int  drvPulser::sendReceive(char* commandStr, int value)
 
 static void pollerThreadC(void *drvPvt)
 {
-    drvPulser *pPvt = (drvPulser *)drvPvt;
+    drvPulser *pPvt = (drvPulser*)drvPvt;
 
     pPvt->pollerThread();
 }
 
 void drvPulser::pollerThread()
 {
-    asynStatus prevIOStatus = asynSuccess;
-    epicsTimeStamp currTime, cycleTimeFiveSec, cycleTimeTenSec;
-    double dTFiveSec, dTTenSec;
+    //asynStatus prevIOStatus = asynSuccess;
+    //epicsTimeStamp currTime, cycleTimeFiveSec, cycleTimeTenSec;
+    //double dTFiveSec, dTTenSec;
+    int status;
+    int prevStatus = 1;
+    static const char *functionName = "pollerThread";
 
-    printf("poller thread called!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+    printf("Poller thread started\n");
 
     lock();
 
-    /* Loop forever */
     while (1)
     {
-        /* Sleep for the poll delay or waiting for epicsEvent with the port unlocked */
         unlock();
 
+        // sleep for poll delay or waiting for epicsEvent with port unlocked
         epicsEventWaitWithTimeout(pollerEventId_, pollTime_);
 
         if (pulserExiting_) break;
 
-        epicsTimeGetCurrent(&currTime);
-        dTFiveSec = epicsTimeDiffInSeconds(&currTime, &cycleTimeFiveSec);
-        dTTenSec = epicsTimeDiffInSeconds(&currTime, &cycleTimeTenSec);
+        //epicsTimeGetCurrent(&currTime);
+        //dTFiveSec = epicsTimeDiffInSeconds(&currTime, &cycleTimeFiveSec);
+        //dTTenSec = epicsTimeDiffInSeconds(&currTime, &cycleTimeTenSec);
 
-        /* Lock the port.  It is important that the port be locked so other threads cannot access the Pulser
-         * structure while the poller thread is running. */
         lock();
 
-        if(dTFiveSec >= 5.) {
+        //if(dTFiveSec >= 5.) {
+        //    // update cycle time
+        //    epicsTimeGetCurrent(&cycleTimeFiveSec);
+        //}
 
-            /*Update cycle time*/
-            epicsTimeGetCurrent(&cycleTimeFiveSec);
-        }
+        //if(dTTenSec >= 10.) {
+        //    // update cycle time
+        //    epicsTimeGetCurrent(&cycleTimeTenSec);
+        //}
 
-        if(dTTenSec >= 10.) {
-
-            /*Update cycle time*/
-            epicsTimeGetCurrent(&cycleTimeTenSec);
-        }
-
-        /*****************Do this every cycle******************************/
-        /* If we have an I/O error this time and the previous time, just try again */
-        if (ioStatus_ != asynSuccess &&
-            ioStatus_ == prevIOStatus) {
-            epicsThreadSleep(1.0);
-            continue;
-        }
-
-        /* If the I/O status has changed then force callbacks */
-        if (ioStatus_ != prevIOStatus) 
-            forceCallback_ = true;
-
-        /* Don't start polling until EPICS interruptAccept flag is set,
-         * because it does callbacks to device support. */
+        // don't start polling until EPICS interruptAccept flag is set,
+        // because it does callbacks to device support
         while (!interruptAccept) {
+            printf("interruptAccept = 0\n");
             unlock();
             epicsThreadSleep(0.1);
             lock();
         }
 
-        //unlock();
-        /* Reset the forceCallback flag */
-        forceCallback_ = false;
-
-        /* Set the previous I/O status */
-        prevIOStatus = ioStatus_;
+        // check TCP connection to STM server
+        pasynManager->isConnected(pasynUserOctet_, &isConnected_);
+            
+        if (isConnected_ != 0) {
+            // get status mesage if connected
+            sendReceive((char*)"Status", 1);
+            
+            if (prevStatus == 0)
+            {
+                //update connection PV
+                setIntegerParam(comm_, isConnected_);
+    
+                // do callbacks so higher layers see any changes
+                callParamCallbacks();
+                
+                prevStatus = 1;
+            }
+        } else {
+            printf("LabVIEW server disconnected, trying to reconnect\n");
+            connectReadMetaData(octetPortName_);
+            
+            prevStatus = 0;
+        }
     }
 }
 

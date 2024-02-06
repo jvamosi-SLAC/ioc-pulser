@@ -305,6 +305,7 @@ int StmMsg::decodeStatusMsg(char* msg, float** data, int* size)
     }
     else
     {
+        //printf("Error in Status decoding, index: %d, metadata: %s\n", metaindex, msgMeta.c_str());
         return 0;
     }
   
@@ -329,6 +330,7 @@ int StmMsg::decodeDateTimeMsg(char* msg, char** data, int* size)
     }
     else
     {
+        //printf("Error in DateTime decoding, index: %d, metadata: %s\n", metaindex, msgMeta.c_str());
         return 0;
     }
   
